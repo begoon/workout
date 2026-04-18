@@ -1,28 +1,32 @@
-import type { Handle } from '@sveltejs/kit';
-import { env } from '$env/dynamic/private';
+import { redirect, type Handle } from '@sveltejs/kit';
+import { AUTH_COOKIE, isAuthCookieValid } from '$lib/server/auth';
 
-const USER = env.BASIC_AUTH_USER ?? 'me';
-const PASS = env.BASIC_AUTH_PASS ?? 'em';
-const REALM = 'workout';
+const PUBLIC_PATHS = new Set([
+	'/login',
+	'/manifest.webmanifest',
+	'/service-worker.js',
+	'/favicon.svg',
+	'/favicon.ico',
+	'/icon.svg',
+	'/icon-maskable.svg',
+	'/apple-touch-icon.png'
+]);
+
+function isPublic(pathname: string): boolean {
+	if (PUBLIC_PATHS.has(pathname)) return true;
+	if (pathname.startsWith('/_app/')) return true;
+	return false;
+}
 
 export const handle: Handle = async ({ event, resolve }) => {
-	const header = event.request.headers.get('authorization');
-	if (!header?.startsWith('Basic ')) {
-		return unauthorized();
-	}
-	const decoded = atob(header.slice(6));
-	const sep = decoded.indexOf(':');
-	const user = decoded.slice(0, sep);
-	const pass = decoded.slice(sep + 1);
-	if (user !== USER || pass !== PASS) {
-		return unauthorized();
+	const { pathname } = event.url;
+	const authed = isAuthCookieValid(event.cookies.get(AUTH_COOKIE));
+
+	if (!authed && !isPublic(pathname)) {
+		if (pathname.startsWith('/api/')) {
+			return new Response('unauthorized', { status: 401 });
+		}
+		redirect(303, `/login?from=${encodeURIComponent(pathname)}`);
 	}
 	return resolve(event);
 };
-
-function unauthorized() {
-	return new Response('Authentication required', {
-		status: 401,
-		headers: { 'WWW-Authenticate': `Basic realm="${REALM}", charset="UTF-8"` }
-	});
-}

@@ -8,19 +8,25 @@
 		{ href: '/', label: 'log' },
 		{ href: '/today', label: 'today' }
 	];
+
+	const isLogin = $derived(page.url.pathname === '/login');
 </script>
 
 <svelte:head>
 	<link rel="icon" href={favicon} />
-	<title>workout</title>
 </svelte:head>
 
 <div class="shell">
-	<nav>
-		{#each links as { href, label } (href)}
-			<a {href} class:active={page.url.pathname === href}>{label}</a>
-		{/each}
-	</nav>
+	{#if !isLogin}
+		<nav>
+			<div class="links">
+				{#each links as { href, label } (href)}
+					<a {href} class:active={page.url.pathname === href}>{label}</a>
+				{/each}
+			</div>
+			<a class="logout" href="/logout" data-sveltekit-reload>logout</a>
+		</nav>
+	{/if}
 	<main>
 		{@render children()}
 	</main>
@@ -53,16 +59,24 @@
 		min-height: 100dvh;
 		display: flex;
 		flex-direction: column;
+		padding-top: env(safe-area-inset-top);
+		padding-bottom: env(safe-area-inset-bottom);
 	}
 	nav {
 		display: flex;
+		justify-content: space-between;
+		align-items: center;
 		gap: 1rem;
-		padding: 0.9rem 1rem;
+		padding: 0.9rem max(1rem, env(safe-area-inset-left)) 0.9rem max(1rem, env(safe-area-inset-right));
 		border-bottom: 1px solid var(--border);
 		position: sticky;
-		top: 0;
+		top: env(safe-area-inset-top);
 		background: var(--bg);
 		z-index: 1;
+	}
+	.links {
+		display: flex;
+		gap: 1rem;
 	}
 	nav a {
 		color: var(--muted);
@@ -75,8 +89,11 @@
 		color: #e9ecf2;
 		background: var(--card);
 	}
+	.logout {
+		font-size: 0.85rem;
+	}
 	main {
-		padding: 1rem;
+		padding: 1rem max(1rem, env(safe-area-inset-right)) 1rem max(1rem, env(safe-area-inset-left));
 		flex: 1;
 	}
 	@media (min-width: 720px) {
