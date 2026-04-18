@@ -12,8 +12,12 @@
 	$effect(() => {
 		loaded = false;
 		void (async () => {
-			log = await storage.getDay(date);
-			loaded = true;
+			try {
+				log = await storage.getDay(date);
+				loaded = true;
+			} catch (err) {
+				alert(`Failed to load ${date}\n${err instanceof Error ? err.message : String(err)}`);
+			}
 		})();
 	});
 
@@ -25,9 +29,15 @@
 	});
 
 	async function bump(exc: string, delta: number) {
+		const prev = log;
 		const optimistic = Math.max(0, (log[exc] ?? 0) + delta);
 		log = { ...log, [exc]: optimistic };
-		log = await storage.bump(date, exc, delta);
+		try {
+			log = await storage.bump(date, exc, delta);
+		} catch (err) {
+			log = prev;
+			alert(`Failed to save\n${err instanceof Error ? err.message : String(err)}`);
+		}
 	}
 </script>
 

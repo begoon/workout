@@ -2,7 +2,6 @@ export type DayLog = Record<string, number>;
 
 export interface Storage {
 	getDay(date: string): Promise<DayLog>;
-	setDay(date: string, log: DayLog): Promise<void>;
 	bump(date: string, exercise: string, delta: number): Promise<DayLog>;
 	getRange(fromDate: string, toDate: string): Promise<Record<string, DayLog>>;
 }

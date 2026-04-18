@@ -9,9 +9,22 @@
 	let range = $state<Record<string, DayLog>>({});
 	let loaded = $state(false);
 
-	onMount(async () => {
-		range = await storage.getRange(from, today);
-		loaded = true;
+	async function refresh() {
+		try {
+			range = await storage.getRange(from, today);
+			loaded = true;
+		} catch (err) {
+			alert(`Failed to load log\n${err instanceof Error ? err.message : String(err)}`);
+		}
+	}
+
+	onMount(() => {
+		void refresh();
+		const onVisible = () => {
+			if (document.visibilityState === 'visible') void refresh();
+		};
+		document.addEventListener('visibilitychange', onVisible);
+		return () => document.removeEventListener('visibilitychange', onVisible);
 	});
 
 	const days = Array.from({ length: DAYS }, (_, i) => addDays(today, -i));
