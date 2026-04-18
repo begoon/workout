@@ -1,0 +1,56 @@
+name: Daily backup
+
+on:
+  schedule:
+    - cron: '0 7 * * *'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  backup:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: latest
+
+      - name: Install dependencies
+        run: bun install --frozen-lockfile
+
+      - name: Generate backup
+        id: backup
+        env:
+          REDIS_URL: ${{ secrets.REDIS_URL }}
+        run: |
+          set -euo pipefail
+          FILE="backup-$(date -u +%Y.%m.%d-%H.%M.%S).json"
+          mkdir -p backup
+          bun backup.ts "backup/$FILE"
+          cp "backup/$FILE" "$RUNNER_TEMP/$FILE"
+          echo "file=$FILE" >> "$GITHUB_OUTPUT"
+
+      - name: Commit to backup branch
+        env:
+          FILE: ${{ steps.backup.outputs.file }}
+        run: |
+          set -euo pipefail
+          git config user.name  "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+
+          git fetch origin backup || true
+          if git rev-parse --verify origin/backup >/dev/null 2>&1; then
+            git checkout -B backup origin/backup
+          else
+            git checkout --orphan backup
+            git rm -rf . >/dev/null 2>&1 || true
+          fi
+
+          mkdir -p backup
+          cp "$RUNNER_TEMP/$FILE" "backup/$FILE"
+          git add -f "backup/$FILE"
+          git commit -m "backed up -- $FILE"
+          git push origin backup
