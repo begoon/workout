@@ -1,6 +1,8 @@
 <script lang="ts">
+	import { onMount } from 'svelte';
 	import favicon from '$lib/assets/favicon.svg';
 	import { page } from '$app/state';
+	import { migrateLocalStorageOnce } from '$lib/migrate';
 
 	let { children } = $props();
 
@@ -8,6 +10,10 @@
 		{ href: '/', label: 'log' },
 		{ href: '/today', label: 'today' }
 	];
+
+	onMount(() => {
+		void migrateLocalStorageOnce();
+	});
 </script>
 
 <svelte:head>

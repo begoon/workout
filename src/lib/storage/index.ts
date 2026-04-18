@@ -1,6 +1,6 @@
-import { localStorageBackend } from './local';
+import { remoteBackend } from './remote';
 import type { Storage } from './types';
 
-export const storage: Storage = localStorageBackend;
+export const storage: Storage = remoteBackend;
 export type { DayLog, Storage } from './types';
 export { todayISO, addDays } from './types';

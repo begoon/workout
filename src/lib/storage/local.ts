@@ -17,6 +17,14 @@ export const localStorageBackend: Storage = {
 			localStorage.removeItem(PREFIX + date);
 		}
 	},
+	async bump(date, exercise, delta) {
+		const current = await this.getDay(date);
+		const next = Math.max(0, (current[exercise] ?? 0) + delta);
+		const updated = { ...current, [exercise]: next };
+		if (next === 0) delete updated[exercise];
+		await this.setDay(date, updated);
+		return updated;
+	},
 	async getRange(fromDate, toDate) {
 		const out: Record<string, DayLog> = {};
 		if (typeof localStorage === 'undefined') return out;

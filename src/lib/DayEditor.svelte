@@ -25,9 +25,9 @@
 	});
 
 	async function bump(exc: string, delta: number) {
-		const next = Math.max(0, (log[exc] ?? 0) + delta);
-		log = { ...log, [exc]: next };
-		await storage.setDay(date, log);
+		const optimistic = Math.max(0, (log[exc] ?? 0) + delta);
+		log = { ...log, [exc]: optimistic };
+		log = await storage.bump(date, exc, delta);
 	}
 </script>
 
