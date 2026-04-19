@@ -17,7 +17,14 @@ export const storage: Storage = {
 			headers: { 'content-type': 'application/json' },
 			body: JSON.stringify({ exercise, delta })
 		}),
-	getRange: (from, to) => request<Record<string, DayLog>>(`/api/range?from=${from}&to=${to}`)
+	getRange: (from, to) => request<Record<string, DayLog>>(`/api/range?from=${from}&to=${to}`),
+	getExercises: () => request<string[]>('/api/exercises'),
+	setExercises: (list) =>
+		request<string[]>('/api/exercises', {
+			method: 'PUT',
+			headers: { 'content-type': 'application/json' },
+			body: JSON.stringify(list)
+		})
 };
 
 export type { DayLog, Storage } from './types';

@@ -1,19 +1,20 @@
 <script lang="ts">
-	import { onMount } from 'svelte';
-	import { EXERCISES } from '$lib/exercises';
 	import { storage, todayISO, type DayLog } from '$lib/storage';
 
 	let { date }: { date: string } = $props();
 
 	const today = todayISO();
 	let log = $state<DayLog>({});
+	let exercises = $state<string[]>([]);
 	let loaded = $state(false);
 
 	$effect(() => {
 		loaded = false;
 		void (async () => {
 			try {
-				log = await storage.getDay(date);
+				const [d, list] = await Promise.all([storage.getDay(date), storage.getExercises()]);
+				log = d;
+				exercises = list;
 				loaded = true;
 			} catch (err) {
 				alert(`Failed to load ${date}\n${err instanceof Error ? err.message : String(err)}`);
@@ -49,7 +50,7 @@
 
 	{#if loaded}
 		<ul class="list">
-			{#each EXERCISES as exc (exc)}
+			{#each exercises as exc (exc)}
 				{@const n = log[exc] ?? 0}
 				<li class:active={n > 0}>
 					<span class="name">{exc}</span>

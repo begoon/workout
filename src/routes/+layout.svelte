@@ -6,7 +6,8 @@
 
 	const links = [
 		{ href: '/', label: 'log' },
-		{ href: '/today', label: 'today' }
+		{ href: '/today', label: 'today' },
+		{ href: '/exercises', label: 'exercises' }
 	];
 
 	const isLogin = $derived(page.url.pathname === '/login');

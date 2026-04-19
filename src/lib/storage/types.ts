@@ -4,6 +4,8 @@ export interface Storage {
 	getDay(date: string): Promise<DayLog>;
 	bump(date: string, exercise: string, delta: number): Promise<DayLog>;
 	getRange(fromDate: string, toDate: string): Promise<Record<string, DayLog>>;
+	getExercises(): Promise<string[]>;
+	setExercises(list: string[]): Promise<string[]>;
 }
 
 export function todayISO(d = new Date()): string {

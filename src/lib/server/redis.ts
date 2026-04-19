@@ -24,6 +24,8 @@ export async function getRedis(): Promise<RedisClient> {
 export const DAY_PREFIX = 'workout:day:';
 export const dayKey = (date: string) => `${DAY_PREFIX}${date}`;
 
+export const EXERCISES_KEY = 'workout:exercises';
+
 export function toDayLog(hash: Record<string, string>): Record<string, number> {
 	const out: Record<string, number> = {};
 	for (const [k, v] of Object.entries(hash)) {
