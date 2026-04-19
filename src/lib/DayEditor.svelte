@@ -1,5 +1,6 @@
 <script lang="ts">
 	import { storage, todayISO, type DayLog } from '$lib/storage';
+	import { excColor } from '$lib/colors';
 
 	let { date }: { date: string } = $props();
 
@@ -52,7 +53,8 @@
 		<ul class="list">
 			{#each exercises as exc (exc)}
 				{@const n = log[exc] ?? 0}
-				<li class:active={n > 0}>
+				<li class:active={n > 0} style="--exc-color:{excColor(exc)}">
+					<span class="dot"></span>
 					<span class="name">{exc}</span>
 					<span class="count">{n}</span>
 					<div class="buttons">
@@ -94,20 +96,28 @@
 	}
 	li {
 		display: grid;
-		grid-template-columns: 1fr auto auto;
+		grid-template-columns: auto 1fr auto auto;
 		align-items: center;
-		gap: 1rem;
+		gap: 0.75rem;
 		padding: 0.9rem 1rem;
 		background: var(--card);
 		border-radius: 12px;
 		border: 1px solid var(--border);
+		border-left: 4px solid var(--exc-color);
 	}
 	li.active {
-		background: color-mix(in srgb, var(--accent) 14%, var(--card));
-		border-color: color-mix(in srgb, var(--accent) 40%, var(--border));
+		background: color-mix(in srgb, var(--exc-color) 14%, var(--card));
+		border-color: color-mix(in srgb, var(--exc-color) 40%, var(--border));
+		border-left-color: var(--exc-color);
 	}
 	li.active .count {
-		color: var(--accent);
+		color: var(--exc-color);
+	}
+	.dot {
+		width: 0.7rem;
+		height: 0.7rem;
+		border-radius: 50%;
+		background: var(--exc-color);
 	}
 	.name {
 		font-size: 1.05rem;

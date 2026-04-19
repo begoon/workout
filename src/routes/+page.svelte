@@ -1,6 +1,7 @@
 <script lang="ts">
 	import { onMount } from 'svelte';
 	import { addDays, storage, todayISO, type DayLog } from '$lib/storage';
+	import { excColor } from '$lib/colors';
 
 	const DAYS = 42;
 	const today = todayISO();
@@ -57,7 +58,11 @@
 					{#if items.length}
 						<ul>
 							{#each items as [exc, n] (exc)}
-								<li><span>{exc}</span><b>{n}</b></li>
+								<li>
+									<span class="dot" style="background:{excColor(exc)}"></span>
+									<span class="name">{exc}</span>
+									<b>{n}</b>
+								</li>
 							{/each}
 						</ul>
 					{/if}
@@ -135,8 +140,22 @@
 	}
 	li {
 		display: flex;
-		justify-content: space-between;
+		align-items: center;
+		gap: 0.35rem;
 		font-size: 0.85rem;
+	}
+	.dot {
+		width: 0.5rem;
+		height: 0.5rem;
+		border-radius: 50%;
+		flex: 0 0 auto;
+	}
+	.name {
+		flex: 1;
+		min-width: 0;
+		overflow: hidden;
+		text-overflow: ellipsis;
+		white-space: nowrap;
 	}
 	b {
 		font-variant-numeric: tabular-nums;
