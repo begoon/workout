@@ -25,3 +25,4 @@ vite.config.ts.timestamp-*
 # Local backups
 workout-data.json
 backup-*.json
+.claude/settings.local.json

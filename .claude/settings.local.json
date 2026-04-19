@@ -1,8 +1,0 @@
-{
-  "permissions": {
-    "allow": [
-      "Bash(awk 'NR>=141 && NR<=148' /Users/alexander/github/workout/src/routes/+page.svelte)",
-      "Bash(bun run *)"
-    ]
-  }
-}
