@@ -115,8 +115,7 @@
 		transform: scale(0.98);
 	}
 	.day.month-alt {
-		background: color-mix(in srgb, #ffffff 5%, var(--card));
-		border-color: color-mix(in srgb, #ffffff 6%, var(--border));
+		background: var(--card-alt);
 	}
 	.day.empty {
 		opacity: 0.45;

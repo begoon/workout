@@ -52,7 +52,7 @@
 		background: var(--btn-active);
 	}
 	.error {
-		color: #f08080;
+		color: var(--danger);
 		margin: 0;
 		text-align: center;
 		font-size: 0.9rem;

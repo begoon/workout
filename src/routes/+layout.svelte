@@ -1,4 +1,5 @@
 <script lang="ts">
+	import { onMount } from 'svelte';
 	import favicon from '$lib/assets/favicon.svg';
 	import { page } from '$app/state';
 
@@ -11,6 +12,24 @@
 	];
 
 	const isLogin = $derived(page.url.pathname === '/login');
+
+	let theme = $state<'light' | 'dark'>('light');
+
+	onMount(() => {
+		const current = document.documentElement.getAttribute('data-theme');
+		theme = current === 'dark' ? 'dark' : 'light';
+	});
+
+	function toggleTheme() {
+		const next: 'light' | 'dark' = theme === 'dark' ? 'light' : 'dark';
+		theme = next;
+		document.documentElement.setAttribute('data-theme', next);
+		try {
+			localStorage.setItem('workout-theme', next);
+		} catch (e) {
+			// ignore
+		}
+	}
 </script>
 
 <svelte:head>
@@ -25,7 +44,18 @@
 					<a {href} class:active={page.url.pathname === href}>{label}</a>
 				{/each}
 			</div>
-			<a class="logout" href="/logout" data-sveltekit-reload>logout</a>
+			<div class="right">
+				<button
+					type="button"
+					class="theme"
+					onclick={toggleTheme}
+					title="Switch theme"
+					aria-label="Switch to {theme === 'dark' ? 'light' : 'dark'} mode"
+				>
+					{theme === 'dark' ? 'light' : 'dark'}
+				</button>
+				<a class="logout" href="/logout" data-sveltekit-reload>logout</a>
+			</div>
 		</nav>
 	{/if}
 	<main>
@@ -34,20 +64,36 @@
 </div>
 
 <style>
-	:global(:root) {
+	:global(:root[data-theme='dark']) {
 		--bg: #0f1115;
 		--card: #171a21;
+		--card-alt: #1c2029;
 		--border: #242834;
 		--btn: #1f2430;
 		--btn-active: #2a3040;
+		--text: #e9ecf2;
 		--muted: #8a92a5;
 		--accent: #6ea8ff;
+		--danger: #f08080;
 		color-scheme: dark;
+	}
+	:global(:root[data-theme='light']) {
+		--bg: #f6f7fa;
+		--card: #ffffff;
+		--card-alt: #eef0f6;
+		--border: #d9dde5;
+		--btn: #eef0f6;
+		--btn-active: #dee2ec;
+		--text: #1a1d24;
+		--muted: #6a7286;
+		--accent: #2a63c4;
+		--danger: #c44040;
+		color-scheme: light;
 	}
 	:global(body) {
 		margin: 0;
 		background: var(--bg);
-		color: #e9ecf2;
+		color: var(--text);
 		font-family:
 			ui-sans-serif,
 			system-ui,
@@ -79,6 +125,11 @@
 		display: flex;
 		gap: 1rem;
 	}
+	.right {
+		display: flex;
+		gap: 0.7rem;
+		align-items: center;
+	}
 	nav a {
 		color: var(--muted);
 		text-decoration: none;
@@ -87,11 +138,25 @@
 		border-radius: 6px;
 	}
 	nav a.active {
-		color: #e9ecf2;
+		color: var(--text);
 		background: var(--card);
 	}
 	.logout {
 		font-size: 0.85rem;
+	}
+	.theme {
+		font-size: 0.85rem;
+		color: var(--muted);
+		background: transparent;
+		border: 1px solid var(--border);
+		padding: 0.2rem 0.55rem;
+		border-radius: 6px;
+		cursor: pointer;
+		font-family: inherit;
+	}
+	.theme:hover {
+		color: var(--text);
+		border-color: var(--accent);
 	}
 	main {
 		padding: 1rem max(1rem, env(safe-area-inset-right)) 1rem max(1rem, env(safe-area-inset-left));

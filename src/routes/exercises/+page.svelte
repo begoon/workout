@@ -160,7 +160,7 @@
 		cursor: not-allowed;
 	}
 	button.remove {
-		color: #f08080;
+		color: var(--danger);
 	}
 	.add {
 		display: grid;
