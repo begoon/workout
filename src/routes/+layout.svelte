@@ -2,6 +2,7 @@
 	import { onMount } from 'svelte';
 	import favicon from '$lib/assets/favicon.svg';
 	import { page } from '$app/state';
+	import { version } from '$app/environment';
 
 	let { children } = $props();
 
@@ -45,6 +46,7 @@
 				{/each}
 			</div>
 			<div class="right">
+				<span class="commit" title="build {version}">{version}</span>
 				<button
 					type="button"
 					class="theme"
@@ -143,6 +145,13 @@
 	}
 	.logout {
 		font-size: 0.85rem;
+	}
+	.commit {
+		font-size: 0.75rem;
+		color: var(--muted);
+		font-variant-numeric: tabular-nums;
+		font-family: ui-monospace, SFMono-Regular, monospace;
+		opacity: 0.7;
 	}
 	.theme {
 		font-size: 0.85rem;
