@@ -15,7 +15,6 @@ sw.addEventListener('install', (event) => {
 		(async () => {
 			const cache = await caches.open(CACHE);
 			await cache.addAll(ASSETS);
-			await sw.skipWaiting();
 		})()
 	);
 });
@@ -28,6 +27,10 @@ sw.addEventListener('activate', (event) => {
 			await sw.clients.claim();
 		})()
 	);
+});
+
+sw.addEventListener('message', (event) => {
+	if (event.data?.type === 'SKIP_WAITING') sw.skipWaiting();
 });
 
 sw.addEventListener('fetch', (event) => {

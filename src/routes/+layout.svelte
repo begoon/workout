@@ -15,11 +15,68 @@
 	const isLogin = $derived(page.url.pathname === '/login');
 
 	let theme = $state<'light' | 'dark'>('light');
+	let updateReady = $state(false);
+	let waitingWorker: ServiceWorker | null = null;
 
 	onMount(() => {
 		const current = document.documentElement.getAttribute('data-theme');
 		theme = current === 'dark' ? 'dark' : 'light';
+
+		if (!('serviceWorker' in navigator)) return;
+
+		const standalone =
+			window.matchMedia('(display-mode: standalone)').matches ||
+			(navigator as Navigator & { standalone?: boolean }).standalone === true;
+		if (!standalone) return;
+
+		let reloaded = false;
+		navigator.serviceWorker.addEventListener('controllerchange', () => {
+			if (reloaded) return;
+			reloaded = true;
+			location.reload();
+		});
+
+		let cleanup = () => {};
+
+		navigator.serviceWorker.ready.then((reg) => {
+			const announce = (worker: ServiceWorker | null) => {
+				if (!worker || !navigator.serviceWorker.controller) return;
+				if (worker.state === 'installed') {
+					waitingWorker = worker;
+					updateReady = true;
+				}
+			};
+
+			const onUpdateFound = () => {
+				const worker = reg.installing;
+				if (!worker) return;
+				worker.addEventListener('statechange', () => announce(worker));
+			};
+
+			reg.addEventListener('updatefound', onUpdateFound);
+			announce(reg.waiting);
+
+			const check = () => {
+				reg.update().catch(() => {});
+			};
+			const onVisibility = () => {
+				if (document.visibilityState === 'visible') check();
+			};
+			document.addEventListener('visibilitychange', onVisibility);
+			check();
+
+			cleanup = () => {
+				reg.removeEventListener('updatefound', onUpdateFound);
+				document.removeEventListener('visibilitychange', onVisibility);
+			};
+		});
+
+		return () => cleanup();
 	});
+
+	function applyUpdate() {
+		waitingWorker?.postMessage({ type: 'SKIP_WAITING' });
+	}
 
 	function toggleTheme() {
 		const next: 'light' | 'dark' = theme === 'dark' ? 'light' : 'dark';
@@ -46,6 +103,11 @@
 				{/each}
 			</div>
 			<div class="right">
+				{#if updateReady}
+					<button type="button" class="update" onclick={applyUpdate} title="Reload to apply update">
+						update
+					</button>
+				{/if}
 				<span class="commit" title="build {version}">{version}</span>
 				<button
 					type="button"
@@ -166,6 +228,16 @@
 	.theme:hover {
 		color: var(--text);
 		border-color: var(--accent);
+	}
+	.update {
+		font-size: 0.85rem;
+		color: var(--bg);
+		background: var(--accent);
+		border: 1px solid var(--accent);
+		padding: 0.2rem 0.6rem;
+		border-radius: 6px;
+		cursor: pointer;
+		font-family: inherit;
 	}
 	main {
 		padding: 1rem max(1rem, env(safe-area-inset-right)) 1rem max(1rem, env(safe-area-inset-left));
