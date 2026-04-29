@@ -8,20 +8,34 @@
 	let log = $state<DayLog>({});
 	let exercises = $state<string[]>([]);
 	let loaded = $state(false);
+	let refreshing = $state(false);
+
+	async function load() {
+		try {
+			const [d, list] = await Promise.all([storage.getDay(date), storage.getExercises()]);
+			log = d;
+			exercises = list;
+			loaded = true;
+		} catch (err) {
+			alert(`Failed to load ${date}\n${err instanceof Error ? err.message : String(err)}`);
+		}
+	}
 
 	$effect(() => {
+		date;
 		loaded = false;
-		void (async () => {
-			try {
-				const [d, list] = await Promise.all([storage.getDay(date), storage.getExercises()]);
-				log = d;
-				exercises = list;
-				loaded = true;
-			} catch (err) {
-				alert(`Failed to load ${date}\n${err instanceof Error ? err.message : String(err)}`);
-			}
-		})();
+		void load();
 	});
+
+	async function refresh() {
+		if (refreshing) return;
+		refreshing = true;
+		try {
+			await load();
+		} finally {
+			refreshing = false;
+		}
+	}
 
 	const label = $derived.by(() => {
 		if (date === today) return 'Today';
@@ -46,7 +60,19 @@
 <section class="day-editor">
 	<header>
 		<h1>{label}</h1>
-		<time>{date}</time>
+		<div class="meta">
+			<time>{date}</time>
+			<button
+				type="button"
+				class="refresh"
+				onclick={refresh}
+				disabled={refreshing}
+				aria-label="Refresh"
+				title="Refresh"
+			>
+				{refreshing ? '…' : 'refresh'}
+			</button>
+		</div>
 	</header>
 
 	{#if loaded}
@@ -82,9 +108,34 @@
 		margin: 0;
 		font-size: 1.5rem;
 	}
+	.meta {
+		display: flex;
+		align-items: center;
+		gap: 0.6rem;
+	}
 	time {
 		color: var(--muted);
 		font-variant-numeric: tabular-nums;
+	}
+	.refresh {
+		font-size: 0.85rem;
+		color: var(--muted);
+		background: transparent;
+		border: 1px solid var(--border);
+		padding: 0.2rem 0.55rem;
+		border-radius: 6px;
+		cursor: pointer;
+		font-family: inherit;
+		width: auto;
+		height: auto;
+	}
+	.refresh:hover:not(:disabled) {
+		color: var(--text);
+		border-color: var(--accent);
+	}
+	.refresh:disabled {
+		opacity: 0.6;
+		cursor: default;
 	}
 	.list {
 		list-style: none;
