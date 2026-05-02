@@ -39,7 +39,6 @@
 <section class="calendar">
 	<header>
 		<h1>Log</h1>
-		<a href="/today">today →</a>
 	</header>
 
 	{#if loaded}
@@ -78,17 +77,11 @@
 		margin: 0 auto;
 	}
 	header {
-		display: flex;
-		justify-content: space-between;
-		align-items: baseline;
 		margin-bottom: 1.25rem;
 	}
 	h1 {
 		margin: 0;
 		font-size: 1.5rem;
-	}
-	header a {
-		color: var(--muted);
 	}
 	.grid {
 		display: grid;

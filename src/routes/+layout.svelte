@@ -205,8 +205,8 @@
 		display: flex;
 		justify-content: space-between;
 		align-items: center;
-		gap: 1rem;
-		padding: 0.9rem max(1rem, env(safe-area-inset-left)) 0.9rem max(1rem, env(safe-area-inset-right));
+		gap: 0.5rem;
+		padding: 0.9rem max(0.6rem, env(safe-area-inset-left)) 0.9rem max(0.6rem, env(safe-area-inset-right));
 		border-bottom: 1px solid var(--border);
 		position: sticky;
 		top: env(safe-area-inset-top);
@@ -215,18 +215,18 @@
 	}
 	.links {
 		display: flex;
-		gap: 1rem;
+		gap: 0.25rem;
 	}
 	.right {
 		display: flex;
-		gap: 0.7rem;
+		gap: 0.4rem;
 		align-items: center;
 	}
 	nav a {
 		color: var(--muted);
 		text-decoration: none;
-		font-size: 0.95rem;
-		padding: 0.2rem 0.4rem;
+		font-size: 0.9rem;
+		padding: 0.2rem 0.35rem;
 		border-radius: 6px;
 	}
 	nav a.active {
@@ -234,14 +234,19 @@
 		background: var(--card);
 	}
 	.logout {
-		font-size: 0.85rem;
+		font-size: 0.8rem;
 	}
 	.commit {
-		font-size: 0.75rem;
+		font-size: 0.7rem;
 		color: var(--muted);
 		font-variant-numeric: tabular-nums;
 		font-family: ui-monospace, SFMono-Regular, monospace;
 		opacity: 0.7;
+	}
+	@media (max-width: 380px) {
+		.commit {
+			display: none;
+		}
 	}
 	.theme {
 		display: inline-flex;
@@ -250,9 +255,9 @@
 		color: var(--muted);
 		background: transparent;
 		border: 1px solid var(--border);
-		padding: 0.25rem;
-		width: 1.9rem;
-		height: 1.9rem;
+		padding: 0.2rem;
+		width: 1.7rem;
+		height: 1.7rem;
 		border-radius: 6px;
 		cursor: pointer;
 		font-family: inherit;
