@@ -34,6 +34,11 @@
 		if (!log) return [];
 		return Object.entries(log).filter(([, n]) => n > 0);
 	}
+
+	function weekday(date: string): string {
+		const [y, m, d] = date.split('-').map(Number);
+		return new Date(y, m - 1, d).toLocaleDateString(undefined, { weekday: 'short' });
+	}
 </script>
 
 <section class="calendar">
@@ -53,13 +58,12 @@
 					class:is-today={date === today}
 					class:month-alt={Number(date.slice(5, 7)) % 2 === 0}
 				>
-					<time>{date.slice(5)}</time>
+					<time>{date.slice(5)} {weekday(date)}</time>
 					{#if items.length}
 						<ul>
 							{#each items as [exc, n] (exc)}
 								<li>
-									<span class="dot" style="background:{excColor(exc)}"></span>
-									<span class="name">{exc}</span>
+									<span class="name" style="color:{excColor(exc)}">{exc}</span>
 									<b>{n}</b>
 								</li>
 							{/each}
@@ -92,8 +96,8 @@
 		background: var(--card);
 		border: 1px solid var(--border);
 		border-radius: 10px;
-		padding: 0.6rem 0.7rem;
-		min-height: 90px;
+		padding: 0.3rem 0.6rem;
+		min-height: 40px;
 		display: flex;
 		flex-direction: column;
 		gap: 0.35rem;
@@ -126,21 +130,15 @@
 		list-style: none;
 		margin: 0;
 		padding: 0;
-		display: flex;
-		flex-direction: column;
-		gap: 0.15rem;
+		display: grid;
+		grid-template-columns: 1fr 1fr;
+		gap: 0.15rem 0.9rem;
 	}
 	li {
 		display: flex;
 		align-items: center;
 		gap: 0.35rem;
 		font-size: 0.85rem;
-	}
-	.dot {
-		width: 0.5rem;
-		height: 0.5rem;
-		border-radius: 50%;
-		flex: 0 0 auto;
 	}
 	.name {
 		flex: 1;
