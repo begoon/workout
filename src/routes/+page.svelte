@@ -96,7 +96,7 @@
 		background: var(--card);
 		border: 1px solid var(--border);
 		border-radius: 10px;
-		padding: 0.3rem 0.6rem;
+		padding: 0.3rem 0.8rem;
 		min-height: 40px;
 		display: flex;
 		flex-direction: column;
@@ -130,21 +130,15 @@
 		list-style: none;
 		margin: 0;
 		padding: 0;
-		display: grid;
-		grid-template-columns: 1fr 1fr;
+		display: flex;
+		flex-wrap: wrap;
 		gap: 0.15rem 0.9rem;
 	}
 	li {
 		display: flex;
 		align-items: center;
 		gap: 0.35rem;
-		font-size: 0.85rem;
-	}
-	.name {
-		flex: 1;
-		min-width: 0;
-		overflow: hidden;
-		text-overflow: ellipsis;
+		font-size: 0.78rem;
 		white-space: nowrap;
 	}
 	b {
