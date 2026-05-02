@@ -3,6 +3,7 @@
 	import favicon from '$lib/assets/favicon.svg';
 	import { page } from '$app/state';
 	import { version } from '$app/environment';
+	import { busy } from '$lib/busy.svelte';
 
 	let { children } = $props();
 
@@ -127,6 +128,12 @@
 	</main>
 </div>
 
+{#if busy.active}
+	<div class="busy-overlay" role="status" aria-live="polite">
+		<div class="busy-text">updating…</div>
+	</div>
+{/if}
+
 <style>
 	:global(:root[data-theme='dark']) {
 		--bg: #0f1115;
@@ -247,5 +254,31 @@
 		main {
 			padding: 1.5rem 2rem;
 		}
+	}
+	.busy-overlay {
+		position: fixed;
+		inset: 0;
+		background: rgba(0, 0, 0, 0.45);
+		display: flex;
+		align-items: center;
+		justify-content: center;
+		z-index: 1000;
+		backdrop-filter: blur(2px);
+		animation: busy-fade 0.15s ease-out;
+	}
+	.busy-text {
+		color: white;
+		font-size: 1.6rem;
+		font-weight: 600;
+		letter-spacing: 0.04em;
+		padding: 1.2rem 2rem;
+		border-radius: 14px;
+		background: color-mix(in srgb, var(--accent) 30%, rgba(0, 0, 0, 0.6));
+		border: 1px solid color-mix(in srgb, var(--accent) 50%, transparent);
+		box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4);
+	}
+	@keyframes busy-fade {
+		from { opacity: 0; }
+		to { opacity: 1; }
 	}
 </style>

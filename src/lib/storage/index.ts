@@ -1,12 +1,17 @@
+import { track } from '$lib/busy.svelte';
 import type { DayLog, Storage } from './types';
 
-async function request<T>(url: string, init?: RequestInit): Promise<T> {
-	const res = await fetch(url, init);
-	if (!res.ok) {
-		const text = await res.text().catch(() => '');
-		throw new Error(`${init?.method ?? 'GET'} ${url} → ${res.status}${text ? `: ${text}` : ''}`);
-	}
-	return (await res.json()) as T;
+function request<T>(url: string, init?: RequestInit): Promise<T> {
+	return track(
+		(async () => {
+			const res = await fetch(url, init);
+			if (!res.ok) {
+				const text = await res.text().catch(() => '');
+				throw new Error(`${init?.method ?? 'GET'} ${url} → ${res.status}${text ? `: ${text}` : ''}`);
+			}
+			return (await res.json()) as T;
+		})()
+	);
 }
 
 export const storage: Storage = {
