@@ -1,3 +1,5 @@
+import { untrack } from 'svelte';
+
 let count = $state(0);
 
 export const busy = {
@@ -7,10 +9,10 @@ export const busy = {
 };
 
 export async function track<T>(promise: Promise<T>): Promise<T> {
-	count++;
+	untrack(() => count++);
 	try {
 		return await promise;
 	} finally {
-		count--;
+		untrack(() => count--);
 	}
 }
