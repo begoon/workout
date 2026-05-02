@@ -1,5 +1,6 @@
 import { error, json, type RequestHandler } from '@sveltejs/kit';
-import { dayKey, getRedis, toDayLog } from '$lib/server/redis';
+import type { UpdateFilter } from 'mongodb';
+import { daysCol, toDayLog, type DayDoc } from '$lib/server/mongo';
 
 const DATE_RE = /^\d{4}-\d{2}-\d{2}$/;
 
@@ -12,18 +13,25 @@ export const POST: RequestHandler = async ({ params, request }) => {
 	const d = Math.trunc(Number(delta));
 	if (!Number.isFinite(d) || d === 0) error(400, 'invalid delta');
 
-	const redis = await getRedis();
-	const key = dayKey(date);
+	const days = await daysCol();
+	const field = `exercises.${exercise}`;
 
-	if (d > 0) {
-		await redis.hIncrBy(key, exercise, d);
-	} else {
-		const current = Number((await redis.hGet(key, exercise)) ?? 0);
-		const next = Math.max(0, current + d);
-		if (next === 0) await redis.hDel(key, exercise);
-		else await redis.hSet(key, exercise, String(next));
+	const after = await days.findOneAndUpdate(
+		{ date },
+		{ $inc: { [field]: d } } as UpdateFilter<DayDoc>,
+		{ upsert: true, returnDocument: 'after' }
+	);
+
+	const value = after?.exercises?.[exercise] ?? 0;
+	if (value <= 0) {
+		await days.updateOne({ date }, { $unset: { [field]: '' } });
+		const next = await days.findOne({ date });
+		const log = toDayLog(next?.exercises);
+		if (next && Object.keys(log).length === 0) {
+			await days.deleteOne({ date });
+		}
+		return json(log);
 	}
 
-	const hash = await redis.hGetAll(key);
-	return json(toDayLog(hash));
+	return json(toDayLog(after?.exercises));
 };

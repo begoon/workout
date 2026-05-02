@@ -1,20 +1,12 @@
 import { error, json, type RequestHandler } from '@sveltejs/kit';
-import { EXERCISES_KEY, getRedis } from '$lib/server/redis';
+import { exercisesCol } from '$lib/server/mongo';
 import { DEFAULT_EXERCISES, MAX_EXERCISES, NAME_RE, normalizeName } from '$lib/exercises';
 
 export const GET: RequestHandler = async () => {
-	const redis = await getRedis();
-	const raw = await redis.get(EXERCISES_KEY);
-	if (!raw) return json([...DEFAULT_EXERCISES]);
-	try {
-		const list = JSON.parse(raw);
-		if (!Array.isArray(list) || !list.every((x) => typeof x === 'string')) {
-			return json([...DEFAULT_EXERCISES]);
-		}
-		return json(list);
-	} catch {
-		return json([...DEFAULT_EXERCISES]);
-	}
+	const exercises = await exercisesCol();
+	const docs = await exercises.find({}).sort({ order: 1 }).toArray();
+	if (docs.length === 0) return json([...DEFAULT_EXERCISES]);
+	return json(docs.map((d) => d.name));
 };
 
 export const PUT: RequestHandler = async ({ request }) => {
@@ -34,7 +26,20 @@ export const PUT: RequestHandler = async ({ request }) => {
 	}
 	if (cleaned.length > MAX_EXERCISES) error(400, `too many (max ${MAX_EXERCISES})`);
 
-	const redis = await getRedis();
-	await redis.set(EXERCISES_KEY, JSON.stringify(cleaned));
+	const exercises = await exercisesCol();
+	if (cleaned.length) {
+		await exercises.bulkWrite(
+			cleaned.map((name, i) => ({
+				replaceOne: {
+					filter: { name },
+					replacement: { name, order: i },
+					upsert: true
+				}
+			})),
+			{ ordered: false }
+		);
+	}
+	await exercises.deleteMany({ name: { $nin: cleaned } });
+
 	return json(cleaned);
 };

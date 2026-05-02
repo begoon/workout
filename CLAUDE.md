@@ -1,6 +1,6 @@
 # workout
 
-Personal single-user workout set tracker. SvelteKit app on Vercel, Redis for storage.
+Personal single-user workout set tracker. SvelteKit app on Vercel, MongoDB for storage.
 
 ## Stack
 
@@ -8,7 +8,7 @@ Personal single-user workout set tracker. SvelteKit app on Vercel, Redis for sto
 - **Bun** as package manager + runner (`bun.lock`, not `package-lock.json`).
 - **TypeScript** strict.
 - **Vercel** deploy via `@sveltejs/adapter-vercel`, `nodejs22.x` runtime.
-- **Redis** (Vercel Marketplace integration) via `redis` npm package. Single client reused across serverless invocations.
+- **MongoDB** via `mongodb` npm package. Single client reused across serverless invocations (singleton with in-flight dedupe).
 - **PWA**: web manifest + service worker + iOS meta tags; installable on iOS/Android.
 
 ## Commands
@@ -17,7 +17,7 @@ Personal single-user workout set tracker. SvelteKit app on Vercel, Redis for sto
 bun run dev       # dev server
 bun run check     # svelte-kit sync + svelte-check
 bun run build     # production build
-just backup       # pull Redis dump to backup-YYYY.MM.DD-HH.MM.SS.json
+just backup       # pull MongoDB dump to backup-YYYY.MM.DD-HH.MM.SS.json
 ```
 
 `Justfile` at repo root wraps the above; see also `.github/workflows/backup.yaml` for the daily 07:00 UTC backup.
@@ -26,33 +26,31 @@ just backup       # pull Redis dump to backup-YYYY.MM.DD-HH.MM.SS.json
 
 All read via `$env/dynamic/private` (runtime, not build-time) — changing them on Vercel doesn't require a rebuild, just a new deployment for the function to restart.
 
-- `REDIS_URL` — Redis connection string. Must be set for Production on Vercel.
+- `MONGODB_URI` — MongoDB connection string (database name `workout` is hardcoded). Must be set for Production on Vercel.
 - `AUTH_PASSWORD` — the login password.
 - `AUTH_SECRET` — HMAC key for the auth cookie. Rotating it invalidates every existing cookie everywhere (effective "log everyone out" switch). Generate with `openssl rand -hex 32`.
 
 Without `AUTH_SECRET` or `AUTH_PASSWORD` set, nobody can log in (by design — `issueAuthToken()` returns an empty string, `isAuthCookieValid` always returns false).
 
-## Data model (Redis)
+## Data model (MongoDB)
 
-All keys live under the `workout:` umbrella so the same Redis can host other projects.
+Database `workout`, two collections:
 
-- `workout:day:YYYY-MM-DD` — Redis **Hash**, field = exercise name, value = stringified count. Atomic `HINCRBY` on +/− so concurrent devices don't clobber each other. Fields with value 0 are deleted rather than stored.
-- `workout:exercises` — JSON string, array of exercise names. Absent → fall back to `DEFAULT_EXERCISES` in `src/lib/exercises.ts`.
-
-When a day has no non-zero entries, the whole `workout:day:X` key is allowed to disappear (not a business rule, just a side effect).
+- `days` — one doc per date: `{ date: "YYYY-MM-DD", exercises: { [name]: count } }`. Atomic `$inc` on +/−; on decrement, post-update `$unset` removes fields that hit 0. When `exercises` empties, the whole doc is `deleteOne`-d. Unique index on `date`.
+- `exercises` — one doc per exercise: `{ name, order }`. Sorted by `order` on read. PUT replaces the list via `bulkWrite` (replaceOne upsert per name) + `deleteMany({name: {$nin: list}})`. Empty collection → fall back to `DEFAULT_EXERCISES` in `src/lib/exercises.ts`. Unique index on `name`, secondary index on `order`.
 
 ## Architecture
 
 ### Server
 
 - `src/hooks.server.ts` — request gate. Checks cookie; page requests without auth → `303 → /login?from=…`; `/api/*` → `401`. Public allowlist: `/login`, `/_app/*`, manifest, icons, service worker.
-- `src/lib/server/redis.ts` — singleton `createClient` behind `getRedis()`. Key helpers (`dayKey`, `EXERCISES_KEY`) and `toDayLog` normaliser.
+- `src/lib/server/mongo.ts` — singleton `MongoClient` behind `getDb()`, with `daysCol()`, `exercisesCol()` helpers and `toDayLog()` normaliser. `ensureIndexes()` runs once on first connect.
 - `src/lib/server/auth.ts` — stateless auth. `TOKEN = HMAC_SHA256(AUTH_SECRET, AUTH_PASSWORD)` computed once. `verifyPassword` + `isAuthCookieValid` both use `timingSafeEqual`.
 - `src/routes/api/`
   - `day/[date]/+server.ts` → `GET` → `DayLog`.
-  - `day/[date]/bump/+server.ts` → `POST {exercise, delta}` → new `DayLog`. Delta > 0 uses `HINCRBY`; delta < 0 reads → clamps to 0 → either `HDEL` or `HSET`.
-  - `range/+server.ts` → `GET ?from&to` → pipelined `HGETALL` for each date in the inclusive range (capped at 400 days).
-  - `exercises/+server.ts` → `GET` / `PUT`. PUT normalises (trim, lowercase, dedupe, regex-validate, cap 64).
+  - `day/[date]/bump/+server.ts` → `POST {exercise, delta}` → new `DayLog`. Atomic `$inc` (upsert); when the field goes ≤ 0, follow up with `$unset`, and if the exercises map empties, `deleteOne` the day.
+  - `range/+server.ts` → `GET ?from&to` → single `find({date:{$gte,$lte}})` (capped at 400 days).
+  - `exercises/+server.ts` → `GET` / `PUT`. GET sorts by `order`. PUT normalises (trim, lowercase, dedupe, regex-validate, cap 64) then `bulkWrite` replaceOne-upsert per name + `deleteMany({name:{$nin:list}})`.
 
 ### Client
 
@@ -77,7 +75,7 @@ When a day has no non-zero entries, the whole `workout:day:X` key is allowed to 
 - **Runes everywhere** in Svelte. No stores, no `$:` labels.
 - **Exercise names**: lowercase, validated against `/^[a-z0-9][a-z0-9 _-]{0,31}$/`.
 - **Dates**: `YYYY-MM-DD` in local time; `todayISO()` helper in `src/lib/storage/types.ts`.
-- **Exercise list ∩ day log**: editor iterates the master list (zero-fills missing exercises, enables retroactive logging). Calendar grid iterates only the day's stored hash keys — so removing an exercise from the master list leaves historical data intact and read-only.
+- **Exercise list ∩ day log**: editor iterates the master list (zero-fills missing exercises, enables retroactive logging). Calendar grid iterates only the day's stored exercise keys — so removing an exercise from the master list leaves historical data intact and read-only.
 - **Errors**: any storage failure surfaces via `alert()`. No silent fallbacks, no retry queues.
 
 ## Offline
@@ -96,6 +94,4 @@ Service worker gives you an offline-capable shell. **Writes do not queue**: tapp
 ## Gotchas
 
 - Scheduled GH Actions run only from the default branch; if the workflow file lives anywhere else, nothing fires.
-- `@sveltejs/adapter-auto` failed to bundle `redis` into the serverless function on Vercel — that's why the explicit `@sveltejs/adapter-vercel` is used.
-- Redis v5's `scanIterator` yields batches (arrays), not individual keys. See `backup.ts` for the handle-both pattern.
-- `@redis/client` tries to soft-load `@node-rs/xxhash` and `@opentelemetry/api` — build prints warnings about them being absent. Harmless; they're optional.
+- `@sveltejs/adapter-auto` previously failed to bundle the database driver into the serverless function on Vercel — that's why the explicit `@sveltejs/adapter-vercel` is used.

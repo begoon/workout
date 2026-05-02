@@ -22,7 +22,7 @@ jobs:
 
       - id: backup
         env:
-          REDIS_URL: ${{ secrets.REDIS_URL }}
+          MONGODB_URI: ${{ secrets.MONGODB_URI }}
         run: |
           set -euo pipefail
           FILE="backup-$(date -u +%Y.%m.%d-%H.%M.%S).json"

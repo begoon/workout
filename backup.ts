@@ -1,47 +1,38 @@
 #!/usr/bin/env bun
-import { writeFileSync } from "node:fs";
-import process from "node:process";
-import { createClient } from "redis";
+/// <reference types="bun" />
+import { writeFileSync } from 'node:fs';
+import process from 'node:process';
+import { MongoClient } from 'mongodb';
 
-const url = process.env.REDIS_URL;
+const url = process.env.MONGODB_URI;
 if (!url) {
-    console.error("REDIS_URL not set (populate .env or export it in the shell)");
-    process.exit(1);
+	console.error('MONGODB_URI not set (populate .env or export it in the shell)');
+	process.exit(1);
 }
 
-const PREFIX = "workout:day:";
-const OUT_FILE = process.argv[2] ?? "workout-data.json";
+const OUT_FILE = process.argv[2] ?? 'workout-data.json';
 
-const client = createClient({ url });
-client.on("error", (err: unknown) => console.error("[redis]", err));
+const client = new MongoClient(url);
 await client.connect();
+try {
+	const db = client.db('workout');
 
-const keys: string[] = [];
-for await (const batch of client.scanIterator({ MATCH: `${PREFIX}*`, COUNT: 100 })) {
-    if (Array.isArray(batch)) keys.push(...batch);
-    else keys.push(batch);
+	const exercises = await db.collection('exercises').find({}).sort({ order: 1 }).toArray();
+	const days = await db.collection('days').find({}).sort({ date: 1 }).toArray();
+
+	const sanitize = <T extends { _id: unknown }>(doc: T): T => ({
+		...doc,
+		_id: String(doc._id)
+	});
+
+	const payload = {
+		exportedAt: new Date().toISOString(),
+		exercises: exercises.map(sanitize),
+		days: days.map(sanitize)
+	};
+
+	writeFileSync(OUT_FILE, JSON.stringify(payload, null, 2) + '\n');
+	console.log(`wrote ${exercises.length} exercise(s) and ${days.length} day(s) to ${OUT_FILE}`);
+} finally {
+	await client.close();
 }
-
-const out: Record<string, Record<string, number>> = {};
-if (keys.length) {
-    const multi = client.multi();
-    for (const k of keys) multi.hGetAll(k);
-    const results = (await multi.exec()) as unknown as Array<Record<string, string>>;
-
-    keys.forEach((k, i) => {
-        const date = k.slice(PREFIX.length);
-        const log: Record<string, number> = {};
-        for (const [exc, v] of Object.entries(results[i] ?? {})) {
-            const n = Number(v);
-            if (n > 0) log[exc] = n;
-        }
-        if (Object.keys(log).length) out[date] = log;
-    });
-}
-
-await client.quit();
-
-const sorted = Object.fromEntries(Object.entries(out).sort(([a], [b]) => a.localeCompare(b)));
-writeFileSync(OUT_FILE, JSON.stringify({ exportedAt: new Date().toISOString(), days: sorted }, null, 2) + "\n");
-
-console.log(`wrote ${Object.keys(sorted).length} day(s) to ${OUT_FILE}`);
