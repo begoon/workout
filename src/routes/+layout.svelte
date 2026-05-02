@@ -7,28 +7,50 @@
 
 	let { children } = $props();
 
-	const links = [
-		{ href: '/', label: 'log' },
-		{ href: '/today', label: 'today' },
-		{ href: '/exercises', label: 'exercises' }
-	];
-
 	const isLogin = $derived(page.url.pathname === '/login');
 
 	let theme = $state<'light' | 'dark'>('light');
 	let updateReady = $state(false);
 	let waitingWorker: ServiceWorker | null = null;
+	let ping = $state<number | null>(null);
 
 	onMount(() => {
 		const current = document.documentElement.getAttribute('data-theme');
 		theme = current === 'dark' ? 'dark' : 'light';
 
-		if (!('serviceWorker' in navigator)) return;
+		let pingCancelled = false;
+		const updatePing = async () => {
+			try {
+				const r = await fetch('/api/ping');
+				if (!r.ok) return;
+				const { ms } = (await r.json()) as { ms: number };
+				if (!pingCancelled) ping = ms;
+			} catch {
+				// ignore — keep last value
+			}
+		};
+		const stopPingTimer = () => clearInterval(pingTimer);
+		void updatePing();
+		const pingTimer = setInterval(() => {
+			if (document.visibilityState === 'visible') void updatePing();
+		}, 10_000);
+
+		if (!('serviceWorker' in navigator)) {
+			return () => {
+				pingCancelled = true;
+				stopPingTimer();
+			};
+		}
 
 		const standalone =
 			window.matchMedia('(display-mode: standalone)').matches ||
 			(navigator as Navigator & { standalone?: boolean }).standalone === true;
-		if (!standalone) return;
+		if (!standalone) {
+			return () => {
+				pingCancelled = true;
+				stopPingTimer();
+			};
+		}
 
 		let reloaded = false;
 		navigator.serviceWorker.addEventListener('controllerchange', () => {
@@ -72,7 +94,11 @@
 			};
 		});
 
-		return () => cleanup();
+		return () => {
+			pingCancelled = true;
+			stopPingTimer();
+			cleanup();
+		};
 	});
 
 	function applyUpdate() {
@@ -99,9 +125,12 @@
 	{#if !isLogin}
 		<nav>
 			<div class="links">
-				{#each links as { href, label } (href)}
-					<a {href} class:active={page.url.pathname === href}>{label}</a>
-				{/each}
+				<a href="/" class:active={page.url.pathname === '/'}>log</a>
+				<a href="/today" class:active={page.url.pathname === '/today'}>today</a>
+				<a href="/exercises" class:active={page.url.pathname === '/exercises'}>exercises</a>
+				{#if ping !== null}
+					<span class="ping" title="MongoDB roundtrip">{ping}ms</span>
+				{/if}
 			</div>
 			<div class="right">
 				{#if updateReady}
@@ -215,6 +244,7 @@
 	}
 	.links {
 		display: flex;
+		align-items: baseline;
 		gap: 0.25rem;
 	}
 	.right {
@@ -242,6 +272,14 @@
 		font-variant-numeric: tabular-nums;
 		font-family: ui-monospace, SFMono-Regular, monospace;
 		opacity: 0.7;
+	}
+	.ping {
+		font-size: 0.7rem;
+		color: var(--muted);
+		font-variant-numeric: tabular-nums;
+		font-family: ui-monospace, SFMono-Regular, monospace;
+		opacity: 0.7;
+		margin-left: 0.25rem;
 	}
 	@media (max-width: 380px) {
 		.commit {
