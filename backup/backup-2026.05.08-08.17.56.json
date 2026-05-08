@@ -1,0 +1,192 @@
+{
+  "exportedAt": "2026-05-08T08:17:57.612Z",
+  "exercises": [
+    {
+      "_id": "69f63f60f84db5c7becc11bf",
+      "name": "chins",
+      "order": 0
+    },
+    {
+      "_id": "69f63f60f84db5c7becc11c0",
+      "name": "dips",
+      "order": 1
+    },
+    {
+      "_id": "69f63f60f84db5c7becc11c1",
+      "name": "ohp",
+      "order": 2
+    },
+    {
+      "_id": "69f63f60f84db5c7becc11c2",
+      "name": "pushup",
+      "order": 3
+    },
+    {
+      "_id": "69f63f60f84db5c7becc11c3",
+      "name": "curls",
+      "order": 4
+    }
+  ],
+  "days": [
+    {
+      "_id": "69f63f61f84db5c7becc11cb",
+      "date": "2026-04-18",
+      "exercises": {
+        "chins": 12,
+        "pushup": 10
+      }
+    },
+    {
+      "_id": "69f63f61f84db5c7becc11c7",
+      "date": "2026-04-19",
+      "exercises": {
+        "dips": 10,
+        "chins": 12
+      }
+    },
+    {
+      "_id": "69f63f61f84db5c7becc11c5",
+      "date": "2026-04-20",
+      "exercises": {
+        "chins": 12,
+        "ohp": 10
+      }
+    },
+    {
+      "_id": "69f63f61f84db5c7becc11c9",
+      "date": "2026-04-21",
+      "exercises": {
+        "chins": 12,
+        "pushup": 10
+      }
+    },
+    {
+      "_id": "69f63f61f84db5c7becc11cc",
+      "date": "2026-04-22",
+      "exercises": {
+        "chins": 12,
+        "dips": 10
+      }
+    },
+    {
+      "_id": "69f63f61f84db5c7becc11ca",
+      "date": "2026-04-23",
+      "exercises": {
+        "chins": 12,
+        "ohp": 10
+      }
+    },
+    {
+      "_id": "69f63f61f84db5c7becc11cf",
+      "date": "2026-04-24",
+      "exercises": {
+        "chins": 12,
+        "pushup": 10
+      }
+    },
+    {
+      "_id": "69f63f61f84db5c7becc11c8",
+      "date": "2026-04-25",
+      "exercises": {
+        "chins": 12,
+        "dips": 10
+      }
+    },
+    {
+      "_id": "69f63f61f84db5c7becc11d1",
+      "date": "2026-04-26",
+      "exercises": {
+        "chins": 12,
+        "ohp": 10
+      }
+    },
+    {
+      "_id": "69f63f61f84db5c7becc11d2",
+      "date": "2026-04-27",
+      "exercises": {
+        "chins": 12,
+        "pushup": 10
+      }
+    },
+    {
+      "_id": "69f63f61f84db5c7becc11c4",
+      "date": "2026-04-28",
+      "exercises": {
+        "chins": 12,
+        "dips": 10
+      }
+    },
+    {
+      "_id": "69f63f61f84db5c7becc11ce",
+      "date": "2026-04-29",
+      "exercises": {
+        "ohp": 10,
+        "chins": 12
+      }
+    },
+    {
+      "_id": "69f63f61f84db5c7becc11c6",
+      "date": "2026-04-30",
+      "exercises": {
+        "chins": 12,
+        "pushup": 10
+      }
+    },
+    {
+      "_id": "69f63f61f84db5c7becc11d0",
+      "date": "2026-05-01",
+      "exercises": {
+        "chins": 12,
+        "dips": 11
+      }
+    },
+    {
+      "_id": "69f63f61f84db5c7becc11cd",
+      "date": "2026-05-02",
+      "exercises": {
+        "chins": 12,
+        "ohp": 10
+      }
+    },
+    {
+      "_id": "69f717cdf84db5c7becc153b",
+      "date": "2026-05-03",
+      "exercises": {
+        "chins": 12,
+        "pushup": 10
+      }
+    },
+    {
+      "_id": "69f860a0bc340ecc41dc8587",
+      "date": "2026-05-04",
+      "exercises": {
+        "chins": 12,
+        "dips": 10
+      }
+    },
+    {
+      "_id": "69f9b61930ec0fd56d658890",
+      "date": "2026-05-05",
+      "exercises": {
+        "chins": 12,
+        "ohp": 10
+      }
+    },
+    {
+      "_id": "69fb048a30ec0fd56d65e233",
+      "date": "2026-05-06",
+      "exercises": {
+        "chins": 12,
+        "pushup": 10
+      }
+    },
+    {
+      "_id": "69fc5f9d27b2efee2b56d9f0",
+      "date": "2026-05-07",
+      "exercises": {
+        "chins": 12,
+        "dips": 10
+      }
+    }
+  ]
+}
